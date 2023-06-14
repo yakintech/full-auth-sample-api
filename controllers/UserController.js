@@ -91,7 +91,7 @@ const userController = {
                 }
             })
     },
-    newPasswod: (req, res) => {
+    newPassword: (req, res) => {
 
         User.findOne({ email: req.body.email })
             .then(data => {
@@ -117,3 +117,8 @@ const userController = {
 module.exports = {
     userController
 }
+
+
+//kullanıcı şifremi unuttum diyip email girdikten sonra 1 dk içerisinde code girmek zorunda!
+
+//3 den fazla kodu yanlış giremez!
