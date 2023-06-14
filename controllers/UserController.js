@@ -17,7 +17,7 @@ const userController = {
 
                     //Ürettiğim random code email olarak kullanıcıya atıyorum (endpointte email validation olmalı!)
                     confirmCodeEmail(req.body.email, randomCode)
-                    
+
                     var user = new User({
                         email: req.body.email,
                         password: req.body.password,
@@ -38,39 +38,76 @@ const userController = {
             })
 
     },
-    confirmCode: (req,res) => {
+    confirmCode: (req, res) => {
 
-        User.findOne({email:req.body.email, code: req.body.code})
-        .then(data => {
-            if(data){
-                res.json({email: req.body.email})
-            }
-            else{
-                res.status(404).json({"msg": "Confirm Code error"})
-            }
-        })
-        .catch(err => {
-            res.status(500).send("Mongo error!")
-        })
+        User.findOne({ email: req.body.email, code: req.body.code })
+            .then(data => {
+                if (data) {
+                    res.json({ email: req.body.email })
+                }
+                else {
+                    res.status(404).json({ "msg": "Confirm Code error" })
+                }
+            })
+            .catch(err => {
+                res.status(500).send("Mongo error!")
+            })
     },
-    login: (req,res) => {
+    login: (req, res) => {
 
-        User.findOne({email: req.body.email, password:req.body.password})
-        .then(data =>{
-            if(data){
+        User.findOne({ email: req.body.email, password: req.body.password })
+            .then(data => {
+                if (data) {
 
-                var randomCode = Math.floor(Math.random() * 10000);
-                data.code = randomCode;
-                data.save();
+                    var randomCode = Math.floor(Math.random() * 10000);
+                    data.code = randomCode;
+                    data.save();
 
-                confirmCodeEmail(req.body.email, randomCode);
-                res.json({email: req.body.email})
+                    confirmCodeEmail(req.body.email, randomCode);
+                    res.json({ email: req.body.email })
 
-            }
-            else{
-                res.status(404).json({"msg":"Email or password error"})
-            }
-        })
+                }
+                else {
+                    res.status(404).json({ "msg": "Email or password error" })
+                }
+            })
+
+    },
+    forgotPassword: (req, res) => {
+        User.findOne({ email: req.body.email })
+            .then(data => {
+                if (data) {
+
+                    var randomCode = Math.floor(Math.random() * 10000);
+                    data.code = randomCode;
+                    data.save();
+
+                    confirmCodeEmail(req.body.email, randomCode);
+                    res.json({ email: req.body.email })
+
+                }
+                else {
+                    res.status(404).json({ "msg": "Email error" })
+                }
+            })
+    },
+    newPasswod: (req, res) => {
+
+        User.findOne({ email: req.body.email })
+            .then(data => {
+
+                if (data) {
+                    data.password = req.body.password;
+                    data.save();
+                    res.json({ email: req.body.email })
+                } {
+                    res.status(404).json({ "msg": "Not found!" })
+                }
+
+            })
+            .catch(err => {
+                res.status(500).json(err)
+            })
 
     }
 
