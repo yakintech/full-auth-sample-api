@@ -1,6 +1,8 @@
 const { User } = require("../models/User");
 const { confirmCodeEmail } = require("../utils/emailService");
+var jwt = require('jsonwebtoken');
 
+let privateKey = "lambofgod";
 
 const userController = {
 
@@ -40,13 +42,17 @@ const userController = {
     },
     confirmCode: (req, res) => {
 
-        User.findOne({ email: req.body.email, code: req.body.code })
+        console.log('BODY', req.body);
+        User.findOne({ email: req.body.email.toLowerCase(), code: req.body.code })
             .then(data => {
                 if (data) {
-                    res.json({ email: req.body.email })
+
+                    let token = jwt.sign(req.body.email,privateKey);
+                    console.log('TOKEN', token);
+                    res.json({token: token })
                 }
                 else {
-                    res.status(404).json({ "msg": "Confirm Code error" })
+                    res.status(500).json({ "msg": "Confirm Code error" })
                 }
             })
             .catch(err => {
@@ -55,10 +61,10 @@ const userController = {
     },
     login: (req, res) => {
 
-        User.findOne({ email: req.body.email, password: req.body.password })
+        User.findOne({ email: req.body.email?.toLowerCase(), password: req.body.password })
             .then(data => {
                 if (data) {
-
+                    console.log('OK!');
                     var randomCode = Math.floor(Math.random() * 10000);
                     data.code = randomCode;
                     data.save();
