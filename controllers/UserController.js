@@ -1,6 +1,7 @@
 const { User } = require("../models/User");
 const { confirmCodeEmail } = require("../utils/emailService");
 var jwt = require('jsonwebtoken');
+var moment = require('moment')
 
 let privateKey = "lambofgod";
 
@@ -25,6 +26,7 @@ const userController = {
                         password: req.body.password,
                         code: randomCode
                     });
+                    user.codeExpire = moment().add(20, 'seconds');
 
                     user.save()
                         .then(saveRes => {
@@ -42,34 +44,55 @@ const userController = {
     },
     confirmCode: (req, res) => {
 
-        console.log('BODY', req.body);
-        User.findOne({ email: req.body.email.toLowerCase(), code: req.body.code })
+      
+        User.findOne({ email: req.body.email.toLowerCase()})
             .then(data => {
+           
                 if (data) {
 
-                    let token = jwt.sign(req.body.email,privateKey);
-                    console.log('TOKEN', token);
-                    res.json({token: token })
+                    if(data.code == req.body.code){
+                        if(data.codeCounter > 0 && moment(data.codeExpire) > moment()){
+                            data.codeCounter = 3;
+                            data.isActive = true;
+                            data.save();
+    
+                            let token = jwt.sign(req.body.email,privateKey);
+                            res.json({token: token })
+                        }
+                        else{
+                            res.status(500).json({"message":"Code counter or code expire error!"})
+                        }
+                    }
+                    else{
+                        data.codeCounter = data.codeCounter - 1;
+                        data.save();
+                        res.status(500).json({"message":"Code wrong!"})
+                    }
                 }
                 else {
                     res.status(500).json({ "msg": "Confirm Code error" })
                 }
             })
             .catch(err => {
+                console.log('Err', err);
                 res.status(500).send("Mongo error!")
             })
     },
     login: (req, res) => {
 
-        User.findOne({ email: req.body.email?.toLowerCase(), password: req.body.password })
+
+
+        User.findOne({ email: req.body.email?.toLowerCase(), password: req.body.password, isActive:true })
             .then(data => {
                 if (data) {
-                    console.log('OK!');
+           
                     var randomCode = Math.floor(Math.random() * 10000);
                     data.code = randomCode;
-                    data.save();
+                   
 
                     confirmCodeEmail(req.body.email, randomCode);
+                    data.codeExpire = moment().add(20, 'seconds');
+                    data.save();
                     res.json({ email: req.body.email })
 
                 }
